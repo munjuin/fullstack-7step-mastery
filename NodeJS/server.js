@@ -69,6 +69,12 @@ app.get('/time', (req, res)=>{
   res.render('time.ejs', { time : new Date() });
 })
 
+app.get('/notice', async (req, res)=>{
+  let result = await db.collection('notice').find().toArray();
+  // console.log(result);
+  res.render('notice.ejs', { notices : result })
+})
+
 app.get('/list', async (req, res)=>{
   // res.send('리스트페이지');
   let result = await db.collection('post').find().toArray();
