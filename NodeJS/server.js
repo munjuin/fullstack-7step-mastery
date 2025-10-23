@@ -8,5 +8,18 @@ app.listen(PORT, ()=>{
 })
 
 app.get('/', (req, res)=>{
-  res.send('하이');
+  // res.send('하이');
+  res.sendFile(__dirname + '/index.html')
+})
+
+app.get('/news', (req, res)=>{
+  res.send('날씨 페이지');
+})
+
+app.get('/shop', (req, res)=>{
+  res.send('쇼핑 페이지');
+})
+
+app.get('/about', (req, res)=>{
+  res.sendFile(__dirname + '/about.html');
 })
