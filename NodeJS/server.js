@@ -5,6 +5,8 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 
 app.use(express.static(__dirname + '/public'));
 
+app.set('view engine', 'ejs');
+
 const uri = process.env.MONGODB_URI;
 const PORT = process.env.PORT || 8080;
 
@@ -63,8 +65,14 @@ app.get('/about', (req, res)=>{
   res.sendFile(__dirname + '/about.html');
 })
 
+app.get('/time', (req, res)=>{
+  res.render('time.ejs', { time : new Date() });
+})
+
 app.get('/list', async (req, res)=>{
+  // res.send('리스트페이지');
   let result = await db.collection('post').find().toArray();
-  // console.log(result);
-  res.send(result);
+  // console.log(result[0]);
+  // res.send(result[0].title);
+  res.render('list.ejs', { posts : result })
 })
