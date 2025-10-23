@@ -51,7 +51,7 @@ app.get('/', (req, res)=>{
 })
 
 app.get('/news', (req, res)=>{
-  // res.send('뉴스 페이지');
+  res.send('뉴스 페이지');
   // db.collection('post').insertOne({title : '어쩌구'});
 })
 
@@ -61,4 +61,10 @@ app.get('/shop', (req, res)=>{
 
 app.get('/about', (req, res)=>{
   res.sendFile(__dirname + '/about.html');
+})
+
+app.get('/list', async (req, res)=>{
+  let result = await db.collection('post').find().toArray();
+  // console.log(result);
+  res.send(result);
 })
