@@ -3,6 +3,8 @@ const app = express();
 
 const PORT = process.env.PORT || 8080;
 
+app.use(express.static(__dirname + '/public'));
+
 app.listen(PORT, ()=>{
   console.log(`http://localhost:${PORT} 에서 서버 실행 중`);
 })
