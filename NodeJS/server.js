@@ -128,3 +128,13 @@ app.get('/detail/:id', async (req, res)=>{
     res.status(500).send('데이터 조회 중 서버 오류 발생');
   }
 })
+
+app.get('/edit/:id', async (req, res)=>{
+  let result = await db.collection('post').findOne({_id : new ObjectId(req.params.id)});
+  res.render('edit.ejs', { post : result })
+})
+
+app.post('/update/:id', async (req, res)=>{
+  await db.collection('post').updateOne( { _id : new ObjectId(req.params.id)}, {$set : {title : req.body.title, content : req.body.content}})
+  res.redirect('/list');
+})
