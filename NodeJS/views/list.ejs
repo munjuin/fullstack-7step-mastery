@@ -20,10 +20,12 @@
     <% } %> -->
 
     <% posts.forEach((post, i)=>{ %>
-      <div class="list-box">
-        <h4><%= post.title %></h4>
-        <p><%= post.content %></p>
-      </div>
+      <a href="/detail/<%= post._id %>">
+        <div class="list-box">
+          <h4><%= post.title %></h4>
+          <p><%= post.content %></p>
+        </div>
+      </a>
     <% }) %>
 
   </div> 

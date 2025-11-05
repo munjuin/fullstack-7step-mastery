@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const app = express();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 app.use(express.static(__dirname + '/public'));
 app.use(express.json());
@@ -109,4 +109,11 @@ app.post('/add', async (req, res)=>{
     console.error(error);
     res.status(500).send('데이터 저장 중 서버 오류 발생');
   }
+})
+
+app.get('/detail/:id', async (req, res)=>{
+  let result = await db.collection('post').findOne({_id : new ObjectId(req.params.id)});
+  // console.log(req.params);
+  // console.log(result);
+  res.render('detail.ejs', { post : result });
 })
