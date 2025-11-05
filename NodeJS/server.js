@@ -86,11 +86,27 @@ app.get('/list', async (req, res)=>{
 })
 
 app.get('/write', (req, res)=>{
-  res.render('write.ejs');
+  try {
+    res.render('write.ejs');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('페이지 렌더링 중 오류 발생');
+  }
 })
 
 app.post('/add', async (req, res)=>{
-  // console.log(req.body);
-  await db.collection('post').insertOne({title: req.body.title, content: req.body.content});
-  res.redirect('/list');
+  try {
+    if (req.body.title === '' || req.body.content === ''){
+      res.status(400).send('제목과 내용을 입력해주세요')
+      return;
+      
+    }
+    // console.log(req.body);
+    await db.collection('post').insertOne({title: req.body.title, content: req.body.content});
+    res.redirect('/list');
+    
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('데이터 저장 중 서버 오류 발생');
+  }
 })
