@@ -4,6 +4,8 @@ const app = express();
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 app.use(express.static(__dirname + '/public'));
+app.use(express.json());
+app.use(express.urlencoded({extended : true}));
 
 app.set('view engine', 'ejs');
 
@@ -81,4 +83,14 @@ app.get('/list', async (req, res)=>{
   // console.log(result[0]);
   // res.send(result[0].title);
   res.render('list.ejs', { posts : result })
+})
+
+app.get('/write', (req, res)=>{
+  res.render('write.ejs');
+})
+
+app.post('/add', async (req, res)=>{
+  // console.log(req.body);
+  await db.collection('post').insertOne({title: req.body.title, content: req.body.content});
+  res.redirect('/list');
 })
