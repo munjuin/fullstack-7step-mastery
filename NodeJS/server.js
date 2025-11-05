@@ -112,8 +112,19 @@ app.post('/add', async (req, res)=>{
 })
 
 app.get('/detail/:id', async (req, res)=>{
-  let result = await db.collection('post').findOne({_id : new ObjectId(req.params.id)});
   // console.log(req.params);
-  // console.log(result);
-  res.render('detail.ejs', { post : result });
+  try {
+    let result = await db.collection('post').findOne({_id : new ObjectId(req.params.id)});
+    // console.log(result);
+    if (result === null){
+      res.status(404).send('해당하는 게시물을 찾을 수 없습니다.');
+      return;
+    }
+    
+    res.render('detail.ejs', { post : result });
+    
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('데이터 조회 중 서버 오류 발생');
+  }
 })
