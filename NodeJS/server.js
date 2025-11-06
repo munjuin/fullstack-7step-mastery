@@ -130,11 +130,38 @@ app.get('/detail/:id', async (req, res)=>{
 })
 
 app.get('/edit/:id', async (req, res)=>{
-  let result = await db.collection('post').findOne({_id : new ObjectId(req.params.id)});
-  res.render('edit.ejs', { post : result })
+  try {
+    let result = await db.collection('post').findOne({_id : new ObjectId(req.params.id)});
+    if (result === null){
+      res.status(404).send('해당하는 게시물을 찾을 수 없습니다.');
+      return;
+  }
+    res.render('edit.ejs', { post : result })
+  
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('데이터 조회 중 서버 오류 발생');
+  }
 })
 
 app.post('/update/:id', async (req, res)=>{
-  await db.collection('post').updateOne( { _id : new ObjectId(req.params.id)}, {$set : {title : req.body.title, content : req.body.content}})
-  res.redirect('/list');
+  try {
+    const { title, content } = req.body;
+    if (!title || !content) {
+      res.status(400).send('제목과 내용을 입력해주세요');
+      return;
+    }
+
+    const result = await db.collection('post').updateOne( { _id : new ObjectId(req.params.id)}, {$set : {title : req.body.title, content : req.body.content}})
+
+    if(result.modifiedCount === 0){
+      res.status(404).send('해당하는 게시물을 찾을 수 없습니다.');
+      return;
+    }
+
+    res.redirect('/list');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('데이터 업데이트 중 서버 오류 발생');
+  }
 })
