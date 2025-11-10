@@ -85,6 +85,11 @@ app.get('/notice', async (req, res)=>{
 //   res.render('list.ejs', { posts : result })
 // })
 
+app.get('/list/:page', async (req, res)=>{
+  let result = await db.collection('post').find().skip((req.params.page -1) * 5).limit(5).toArray();
+  res.render('list.ejs', { posts : result });
+})
+
 app.get('/write', (req, res)=>{
   try {
     res.render('write.ejs');
@@ -184,7 +189,12 @@ app.delete('/delete/:id', async (req, res)=>{
   }
 });
 
-app.get('/list/:page', async (req, res)=>{
-  let result = await db.collection('post').find().skip((req.params.page -1) * 5).limit(5).toArray();
-  res.render('list.ejs', { posts : result });
+app.get('/register', (req, res)=>{
+  res.render('register.ejs')
+})
+
+app.post('/register', async (req, res)=>{
+  // console.log(req.body);
+  await db.collection('user').insertOne({username: req.body.username, password: req.body.password});
+  res.redirect('/list/1');
 })
