@@ -77,13 +77,13 @@ app.get('/notice', async (req, res)=>{
   res.render('notice.ejs', { notices : result })
 })
 
-app.get('/list', async (req, res)=>{
-  // res.send('리스트페이지');
-  let result = await db.collection('post').find().toArray();
-  // console.log(result[0]);
-  // res.send(result[0].title);
-  res.render('list.ejs', { posts : result })
-})
+// app.get('/list', async (req, res)=>{
+//   // res.send('리스트페이지');
+//   let result = await db.collection('post').find().toArray();
+//   // console.log(result[0]);
+//   // res.send(result[0].title);
+//   res.render('list.ejs', { posts : result })
+// })
 
 app.get('/write', (req, res)=>{
   try {
@@ -183,3 +183,8 @@ app.delete('/delete/:id', async (req, res)=>{
     res.status(500).send('서버 오류로 삭제에 실패했습니다.');
   }
 });
+
+app.get('/list/:page', async (req, res)=>{
+  let result = await db.collection('post').find().skip((req.params.page -1) * 5).limit(5).toArray();
+  res.render('list.ejs', { posts : result });
+})
