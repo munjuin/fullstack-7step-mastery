@@ -165,3 +165,8 @@ app.post('/update/:id', async (req, res)=>{
     res.status(500).send('데이터 업데이트 중 서버 오류 발생');
   }
 })
+
+app.delete('/delete/:id', async (req, res)=>{
+    // console.log(req.params);
+    await db.collection('post').deleteOne({_id : new ObjectId(req.params.id)});
+});

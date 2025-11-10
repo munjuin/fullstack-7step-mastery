@@ -20,16 +20,27 @@
     <% } %> -->
 
     <% posts.forEach((post, i)=>{ %>
-      <a href="/detail/<%= post._id %>">
         <div class="list-box">
-          <h4><%= post.title %></h4>
-          <p><%= post.content %></p>
+          <a href="/detail/<%= post._id %>">
+            <h4><%= post.title %></h4>
+            <p><%= post.content %></p>
+          </a>
           <a class="btn" href="/edit/<%= post._id %>">수정</a>
+          <span class="btn delete" data-id="<%= post._id %>">삭제</span>
         </div>
-      </a>
     <% }) %>
+  </div>
+<script>
+    document.querySelectorAll('.delete').forEach(button => {
+      button.addEventListener('click', function(e) {
+        
+        const id = e.target.dataset.id;
 
-  </div> 
-
+        fetch('/delete/' + id, {
+          method: 'DELETE'
+        })
+      });
+    });
+  </script>
 </body>
 </html>
