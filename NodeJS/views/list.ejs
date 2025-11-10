@@ -39,8 +39,15 @@
         fetch('/delete/' + id, {
           method: 'DELETE'
         })
+        .then(response => {
+          if (response.ok) {
+            e.target.closest('.list-box').remove();
+          } else {
+            alert('삭제에 실패했습니다.');
+          }
+        });
       });
     });
-  </script>
+</script>
 </body>
 </html>

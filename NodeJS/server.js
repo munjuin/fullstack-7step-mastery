@@ -167,6 +167,19 @@ app.post('/update/:id', async (req, res)=>{
 })
 
 app.delete('/delete/:id', async (req, res)=>{
+  try {
     // console.log(req.params);
-    await db.collection('post').deleteOne({_id : new ObjectId(req.params.id)});
+
+    let result = await db.collection('post').deleteOne({_id : new ObjectId(req.params.id)});
+
+    if (result.deletedCount === 0) {
+      return res.status(404).send('삭제할 게시물을 찾지 못했습니다.');
+    }
+
+    res.status(200).json({ message: '삭제 성공' });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('서버 오류로 삭제에 실패했습니다.');
+  }
 });
