@@ -3,6 +3,8 @@ const express = require('express');
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const methodOverride = require('method-override');
+const bcrypt = require('bcrypt');
+
 
 app.use(express.static(__dirname + '/public'));
 app.use(express.json());
@@ -196,7 +198,33 @@ app.get('/register', (req, res)=>{
 })
 
 app.post('/register', async (req, res)=>{
-  // console.log(req.body);
-  await db.collection('user').insertOne({username: req.body.username, password: req.body.password});
-  res.redirect('/list/1');
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password || username.trim() === '' || password.trim() === '') {
+
+      return res.status(400).send('<script>alert("아이디와 비밀번호를 모두 입력하세요."); window.location.href="/register";</script>');
+    }
+
+    const existingUser = await db.collection('user').findOne({ username: username });
+
+    if (existingUser) {
+      return res.status(409).send('<script>alert("이미 사용 중인 아이디입니다."); window.location.href="/register";</script>');
+    }
+
+    const saltRounds = 10; 
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    await db.collection('user').insertOne({
+      username: username,
+      password: hashedPassword,
+    });
+
+    console.log('회원가입 성공:', username);
+    res.redirect('/list/1');
+
+  } catch (error) {
+    console.error('회원가입 중 심각한 오류 발생:', error);
+    res.status(500).send('<script>alert("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."); window.location.href="/";</script>');
+  }
 })
