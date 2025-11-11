@@ -2,10 +2,12 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const methodOverride = require('method-override');
 
 app.use(express.static(__dirname + '/public'));
 app.use(express.json());
 app.use(express.urlencoded({extended : true}));
+app.use(methodOverride('_method'));
 
 app.set('view engine', 'ejs');
 
@@ -108,7 +110,7 @@ app.post('/add', async (req, res)=>{
     }
     // console.log(req.body);
     await db.collection('post').insertOne({title: req.body.title, content: req.body.content});
-    res.redirect('/list');
+    res.redirect('/list/1');
     
   } catch (error) {
     console.error(error);
@@ -149,7 +151,7 @@ app.get('/edit/:id', async (req, res)=>{
   }
 })
 
-app.post('/update/:id', async (req, res)=>{
+app.put('/update/:id', async (req, res)=>{
   try {
     const { title, content } = req.body;
     if (!title || !content) {
@@ -164,7 +166,7 @@ app.post('/update/:id', async (req, res)=>{
       return;
     }
 
-    res.redirect('/list');
+    res.redirect('/list/1');
   } catch (error) {
     console.error(error);
     res.status(500).send('데이터 업데이트 중 서버 오류 발생');
