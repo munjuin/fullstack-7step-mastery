@@ -1,13 +1,15 @@
 const express = require('express');
 const app = express();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const MongoStore = require('connect-mongo');
+const methodOverride = require('method-override');
 
+app.use(methodOverride('_method'));
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use(express.urlencoded({extended: true}));
@@ -157,7 +159,51 @@ app.get('/write', isLogin, (req, res)=>{
 })
 
 app.post('/write', isLogin, async (req, res)=>{
-  await db.collection('post').insertOne({title: req.body.title, content: req.body.content});
+  await db.collection('post').insertOne({title: req.body.title, content: req.body.content, user: req.user._id, username: req.user.username});
   res.redirect('/');
 })
 
+app.get('/detail/:id', async (req, res)=>{
+  let result = await db.collection('post').findOne({_id: new ObjectId(req.params.id)});
+  res.render('detail.ejs', {post: result});
+})
+
+app.get('/edit/:id', isLogin, async (req, res)=>{
+  let result = await db.collection('post').findOne({_id: new ObjectId(req.params.id)});
+  if(result.user.toString() === req.user._id.toString() && result.username.toString() === req.user.username.toString()){
+    res.render('edit.ejs', {post: result})
+  } else {
+    res.redirect('/');
+  }
+})
+
+app.put('/edit/:id', isLogin, async (req, res)=>{
+  let result = await db.collection('post').findOne({_id: new ObjectId(req.params.id)});
+  if(result.user.toString() === req.user._id.toString() && result.username.toString() === req.user.username.toString()){
+    await db.collection('post').updateOne({_id: new ObjectId(req.params.id)}, {$set: {title: req.body.title, content: req.body.content}});
+    res.redirect('/');
+  } else {
+    res.send('글수정실패')
+  }
+})
+
+app.delete('/delete/:id', isLogin, async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const post = await db.collection('post').findOne({ _id: new ObjectId(postId) });
+    if (!post) {
+      return res.status(404).send('존재하지 않는 글입니다.');
+    }
+    if (post.user.toString() === req.user._id.toString()) {
+      await db.collection('post').deleteOne({ _id: new ObjectId(postId) });
+      res.status(200).send('삭제성공');
+      
+    } else {
+      res.status(403).send('작성자 불일치');
+    }
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('서버 에러');
+  }
+});

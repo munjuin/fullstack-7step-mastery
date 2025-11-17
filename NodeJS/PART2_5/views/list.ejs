@@ -7,8 +7,39 @@
 </head>
 <body>
   <% posts.forEach((post)=>{ %>
-    <h4><%= post.title %></h4>
+    <a href="/detail/<%= post._id %>"><h4><%= post.title %></h4></a>
     <p><%= post.content %></p>
+    <a href="/edit/<%= post._id %>">글수정</a>
+    <span class="delete-btn" data-id="<%= post._id %>">삭제</span>
   <% }) %>
+<script>
+    document.querySelectorAll('.delete-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            const postId = e.target.dataset.id;
+            const listItem = e.target.closest('.list-item');
+
+            if (confirm('정말 삭제하시겠습니까?')) {
+                fetch('/delete/' + postId, {
+                    method: 'DELETE',
+                })
+                .then((r) => {
+                    if (r.status == 200) {
+                        listItem.remove(); 
+                    } else if (r.status == 403) {
+                        alert('본인이 작성한 글만 삭제할 수 있습니다.');
+                    } else if (r.status == 401) {
+                        alert('로그인이 필요합니다.');
+                        window.location.href = '/login';
+                    } else {
+                        alert('서버 에러가 발생했습니다.');
+                    }
+                })
+                .catch((error) => {
+                    console.error('에러:', error);
+                });
+            }
+        });
+    });
+  </script>
 </body>
 </html>
