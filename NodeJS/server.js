@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
+const MongoStore = require('connect-mongo');
 
 app.use(express.static(__dirname + '/public'));
 app.use(express.json());
@@ -19,7 +20,14 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     maxAge: 60 * 60 * 1000,
-  }
+  },
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    dbName: 'forum',
+    collectionName: 'session',
+    autoRemove: 'interval',
+    autoRemoveInterval: 1
+  }),
 }))
 app.use(passport.session());
 
@@ -102,7 +110,7 @@ function checkLogin(req, res, next){
 }
 
 app.get('/', (req, res)=>{
-  // res.send('하이');
+  // res.send('하이');`
   res.sendFile(__dirname + '/index.html')
 })
 
@@ -298,7 +306,7 @@ app.post('/login', async (req, res, next)=>{
 })
 
 // 마이 페이지 접속 api
-app.get('/mypage', checkLogin, async (req, res)=>{
+app.get('/mypage', checkLogin, (req, res)=>{
   console.log(req.user);
   res.render('mypage.ejs', { user : req.user });
 })
