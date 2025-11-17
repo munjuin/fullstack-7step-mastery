@@ -4,13 +4,53 @@ const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const methodOverride = require('method-override');
 const bcrypt = require('bcrypt');
-
+const session = require('express-session');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 
 app.use(express.static(__dirname + '/public'));
 app.use(express.json());
 app.use(express.urlencoded({extended : true}));
 app.use(methodOverride('_method'));
+app.use(passport.initialize());
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 60 * 60 * 1000,
+  }
+}))
+app.use(passport.session());
 
+passport.use(new LocalStrategy(async (username, password, cb) => {
+  let result = await db.collection('user').findOne({ username : username })
+  if (!result) {
+    return cb(null, false, { message: '아이디 DB에 없음' })
+  }
+  const isMatch = await bcrypt.compare(password, result.password);
+  if(isMatch){
+    return cb(null, result);
+  } else {
+    return cb(null, false, { message: '비번불일치' });
+  }
+}))
+
+passport.serializeUser((user, done)=>{
+  process.nextTick(()=>{
+    done(null, {id: user._id, username: user.username});
+  })
+})
+
+passport.deserializeUser(async (user, done)=>{
+  let result = await db.collection('user').findOne({_id : new ObjectId(user.id)});
+  if (result) {
+    delete result.password;
+    process.nextTick(()=>{
+      return done(null, result); 
+    })
+  }
+})
 app.set('view engine', 'ejs');
 
 const uri = process.env.MONGODB_URI;
@@ -90,6 +130,7 @@ app.get('/notice', async (req, res)=>{
 // })
 
 app.get('/list/:page', async (req, res)=>{
+  // console.log(req.user);
   let result = await db.collection('post').find().skip((req.params.page -1) * 5).limit(5).toArray();
   res.render('list.ejs', { posts : result });
 })
@@ -193,10 +234,12 @@ app.delete('/delete/:id', async (req, res)=>{
   }
 });
 
+// 회원 가입 페이지 접속 api
 app.get('/register', (req, res)=>{
   res.render('register.ejs')
 })
 
+// 회원 가입 요청 api
 app.post('/register', async (req, res)=>{
   try {
     const { username, password } = req.body;
@@ -212,7 +255,7 @@ app.post('/register', async (req, res)=>{
       return res.status(409).send('<script>alert("이미 사용 중인 아이디입니다."); window.location.href="/register";</script>');
     }
 
-    const saltRounds = 10; 
+    const saltRounds = parseInt(process.env.SALT_ROUNDS) || 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     await db.collection('user').insertOne({
@@ -227,4 +270,21 @@ app.post('/register', async (req, res)=>{
     console.error('회원가입 중 심각한 오류 발생:', error);
     res.status(500).send('<script>alert("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."); window.location.href="/";</script>');
   }
+})
+
+// 로그인 페이지 접속 api
+app.get('/login', (req, res)=>{
+  res.render('login.ejs');
+})
+
+// 로그인 요청 api
+app.post('/login', async (req, res, next)=>{
+  passport.authenticate('local', (error, user, info)=>{
+    if(error) return res.status(500).json(error);
+    if(!user) return res.status(401).json(info.message);
+    req.logIn(user, (error)=>{
+      if(error) return next(error);
+      res.redirect('/list/1')
+    })
+  })(req, res, next)
 })
