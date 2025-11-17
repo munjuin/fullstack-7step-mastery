@@ -93,6 +93,14 @@ async function run() {
 //서버 시작 함수 호출
 run();
 
+function checkLogin(req, res, next){
+  if(req.isAuthenticated()){
+    return next();
+  } else {
+    res.redirect('/login');
+  }
+}
+
 app.get('/', (req, res)=>{
   // res.send('하이');
   res.sendFile(__dirname + '/index.html')
@@ -287,4 +295,10 @@ app.post('/login', async (req, res, next)=>{
       res.redirect('/list/1')
     })
   })(req, res, next)
+})
+
+// 마이 페이지 접속 api
+app.get('/mypage', checkLogin, async (req, res)=>{
+  console.log(req.user);
+  res.render('mypage.ejs', { user : req.user });
 })
