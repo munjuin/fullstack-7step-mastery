@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="/main.css">
+</head>
+<body class="grey-bg">
+
+  <%- include('nav.ejs') %> 
+  
+  <% if (posts.length === 0) { %>
+      <div class="list-box">
+        <p>검색 결과가 없습니다.</p>
+      </div>
+    <% } %>
+
+    <% posts.forEach((post) => { %>
+      <div class="detail-bg">
+        <h4><%= post.title %></h4>
+        <p><%= post.content %></p>
+      </div>
+    <% }) %>
+
+    <div class="pagination">
+  
+    <% if (currentPage > 1) { %>
+      <a href="/search?val=<%= searchVal %>&page=<%= currentPage - 1 %>">
+        ◀ 이전
+      </a>
+    <% } %>
+
+    <span>Current: <%= currentPage %></span>
+
+    <% if (posts.length == 3) { %>
+      <a href="/search?val=<%= searchVal %>&page=<%= currentPage + 1 %>">
+        다음 ▶
+      </a>
+    <% } %>
+
+  </div>
+
+</body>
+</html>

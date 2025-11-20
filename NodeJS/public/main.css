@@ -76,7 +76,17 @@ a {
   font-family: sans-serif;
   cursor: pointer;
 }
-
 .btn:hover {
   background-color: #e0e0e0;
 }
+.search {
+  margin-left: 20px;
+  padding: 5px;
+}
+.search-send {
+  padding: 6px 10px;
+  background: lightgray;
+  border: none;
+  border-radius: 5px;
+  vertical-align: middle;
+} 
