@@ -8,8 +8,7 @@ const session = require('express-session');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const MongoStore = require('connect-mongo');
-// const { checkTime } = require('./middlewares/index.js');
-
+// const { checkLogin, checkCredentials, checkTime } = require('./middlewares/index.js');
 
 app.use(express.static(__dirname + '/public'));
 app.use(express.json());
@@ -93,6 +92,7 @@ async function run() {
     app.use('/', require('./routes/post.js')(db));
     app.use('/', require('./routes/auth.js')(db, passport));
     app.use('/', require('./routes/comment.js')(db));
+    app.use('/', require('./routes/aaa.js')());
     
     // DB 연결이 성공한 후 Express 서버를 시작
     app.listen(PORT, ()=>{
