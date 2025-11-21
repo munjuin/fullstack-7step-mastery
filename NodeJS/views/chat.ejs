@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <link rel="stylesheet" href="/main.css">
+</head>
+<body class="grey-bg">
+
+  <%- include('nav.ejs') %> 
+  
+<div class="chat-container">
+    <div class="chat-screen">
+      <% messages.forEach((msg) => { %>
+        <div class="chat-box <%= msg.writerId.toString() == user._id.toString() ? 'mine' : '' %>">
+          <span><%= msg.content %></span>
+        </div>
+      <% }) %>
+    </div>
+  
+    <div class="chat-input-box">
+      <input id="chat-input">
+      <button id="send">전송</button>
+    </div>
+  </div>
+
+  <script>
+    const socket = io(); 
+    const roomId = '<%= roomId %>'; // 서버에서 받은 방 ID
+    const myName = '<%= user.username %>';
+    const myId = '<%= user._id %>';
+
+    // 1. 페이지 접속하자마자 "나 이 방(roomId)에 껴줘"라고 요청
+    socket.emit('join-room', roomId);
+
+    // 2. 전송 버튼 누르면 서버로 메시지 발사
+    document.querySelector('#send').addEventListener('click', function(){
+      let content = document.querySelector('#chat-input').value;
+      
+      if(content.trim() === '') return; // 빈칸 방지
+
+      socket.emit('message-send', { 
+        roomId : roomId,
+        content : content, 
+        user : myName,
+        userId : myId
+      });
+
+      document.querySelector('#chat-input').value = ''; // 입력창 비우기
+    });
+
+    // 3. 서버가 "새 메시지 왔다!"고 알려주면 화면에 그리기
+    socket.on('message-broadcast', function(data){
+      // 내가 보낸 건지 남이 보낸 건지 구분 (UI 스타일링용)
+      const isMine = (data.writer === myName) ? 'mine' : '';
+      
+      const chatHtml = `
+        <div class="chat-box ${isMine}">
+          <span>${data.content}</span>
+        </div>
+      `;
+      
+      document.querySelector('.chat-screen').insertAdjacentHTML('beforeend', chatHtml);
+      
+      // 스크롤 자동으로 맨 아래로 내리기
+      const chatScreen = document.querySelector('.chat-screen');
+      chatScreen.scrollTop = chatScreen.scrollHeight;
+    });
+  </script>
+</body>
+</html>

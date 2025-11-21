@@ -13,7 +13,14 @@
   <div class="detail-bg">
     <h4><%= post.title %></h4>
     <p><%= post.content %></p>
+    <p>작성자: <%= post.username %></p> 
+    <% if (user && String(user._id) !== String(post.user)) { %> 
+    <button onclick="requestChat('<%= post.user %>', '<%= post._id %>')">
+      채팅하기
+    </button>
+  <% } %>
   </div>
+
 
   <div class="detail-bg">
     <h4>댓글 작성</h4>
@@ -47,7 +54,27 @@
     <% } %>
   </div>
 
-  
+<script>
+  async function requestChat(writerId, postId) {
+    // 서버에 채팅방 개설 요청
+    const response = await fetch('/chat/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ writerId: writerId, postId: postId })
+    });
 
+    const result = await response.json();
+
+    if (response.status === 200) {
+      // 채팅방으로 이동 (result.roomId는 서버에서 보내준 방 ID)
+      window.location.href = `/chat/room/${result.roomId}`;
+    } else if (response.status === 401) {
+      alert('로그인이 필요합니다.');
+      window.location.href = '/login';
+    } else {
+      alert(result.message);
+    }
+  }
+</script>
 </body>
 </html>

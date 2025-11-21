@@ -8,6 +8,10 @@ const session = require('express-session');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const MongoStore = require('connect-mongo');
+const http = require('http').createServer(app);
+const { Server } = require('socket.io');
+const io = new Server(http);
+
 // const { checkLogin, checkCredentials, checkTime } = require('./middlewares/index.js');
 
 app.use(express.static(__dirname + '/public'));
@@ -32,6 +36,40 @@ app.use(session({
 }))
 app.use(passport.session());
 
+io.on('connection', (socket) => {
+
+  // A. 유저가 방에 들어옴 (클라이언트가 'join-room' 요청을 보냄)
+  socket.on('join-room', (roomId) => {
+    socket.join(roomId); // 소켓을 특정 방(roomId)에 가입시킴
+    console.log(`유저가 ${roomId} 방에 접속함`);
+  });
+
+  // B. 유저가 메시지를 보냄
+  socket.on('message-send', async (data) => {
+    // data = { roomId, content, user, userId ... }
+    
+    // 1. DB에 메시지 저장 (영구 보관용)
+    try {
+      await db.collection('message').insertOne({
+        parent_room: new ObjectId(data.roomId),
+        content: data.content,
+        writer: data.user, 
+        writerId: new ObjectId(data.userId),
+        date: new Date()
+      });
+
+      // 2. 같은 방에 있는 사람들에게만 메시지 뿌리기 ('message-broadcast')
+      io.to(data.roomId).emit('message-broadcast', {
+        content: data.content,
+        writer: data.user
+      });
+      
+    } catch (e) {
+      console.error(e);
+    }
+  });
+
+});
 // app.use('/list', checkTime);
 
 passport.use(new LocalStrategy(async (username, password, cb) => {
@@ -62,6 +100,8 @@ passport.deserializeUser(async (user, done)=>{
     })
   }
 })
+
+
 app.set('view engine', 'ejs');
 
 const uri = process.env.MONGODB_URI;
@@ -91,8 +131,10 @@ async function run() {
 
     app.use('/', require('./routes/post.js')(db));
     app.use('/', require('./routes/auth.js')(db, passport));
-    app.use('/', require('./routes/comment.js')(db));
+    app.use('/', require('./routes/comment.js')(db.passport));
     app.use('/', require('./routes/aaa.js')());
+    app.use('/', require('./routes/search.js')(db, passport));
+    app.use('/', require('./routes/chat.js')(db, passport));
 
     // 1. 기존 인덱스 삭제 (혹시 남아있을까봐 안전장치)
     try { await db.collection('post').dropIndex("title_text"); } catch (e) {}
@@ -102,7 +144,7 @@ async function run() {
     console.log('✅ (제목+내용) 텍스트 인덱스 생성 완료!');
     
     // DB 연결이 성공한 후 Express 서버를 시작
-    app.listen(PORT, ()=>{
+    http.listen(PORT, ()=>{
       console.log(`http://localhost:${PORT} 에서 서버 실행 중`);
     })
 
@@ -143,35 +185,3 @@ app.get('/', (req, res)=>{
 //   // console.log(result);
 //   res.render('notice.ejs', { notices : result })
 // })
-
-app.get('/search', async (req, res) => {
-  // 1. 쿼리스트링에서 데이터 가져오기 (없으면 기본값 설정)
-  const searchVal = req.query.val;
-  // 페이지 정보가 없으면 1페이지로 간주, 숫자로 변환
-  const page = parseInt(req.query.page) || 1; 
-  
-  // 2. 한 페이지에 보여줄 개수 설정
-  const itemsPerPage = 3;
-
-  // 3. skip 공식 적용
-  const skipCount = (page - 1) * itemsPerPage;
-
-  try {
-    let result = await db.collection('post')
-      .find({ title : { $regex : searchVal } })
-      .skip(skipCount)    // 앞에서부터 몇 개 건너뛸지
-      .limit(itemsPerPage) // 몇 개만 가져올지
-      .toArray();
-
-    // 4. 렌더링 (현재 페이지랑 검색어도 같이 보내줘야 버튼을 만듦!)
-    res.render('search.ejs', { 
-      posts : result, 
-      currentPage : page,
-      searchVal : searchVal 
-    });
-
-  } catch (e) {
-    console.error(e);
-    res.status(500).send('검색 중 오류 발생');
-  }
-})

@@ -1,10 +1,10 @@
 const { Router } = require('express');
-// const { ObjectId } = require('mongodb');
-// const { checkLogin, checkCredentials } = require('../middlewares/index.js');
+const { ObjectId } = require('mongodb');
+const { checkLogin, checkCredentials } = require('../middlewares/index.js');
 
 const router = Router();
 
-module.exports = function(db){
+module.exports = function(db, passport){
   // 2. 댓글 작성 기능 (POST) - 신규 추가
   router.post('/comment', async (req, res) => {
     try {

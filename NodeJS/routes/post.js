@@ -56,8 +56,8 @@ module.exports = function(db){
       let comments = await db.collection('comment')
         .find({ parent_id : new ObjectId(req.params.id) })
         .toArray();
-  
-      // [수정됨] user: req.user 를 추가해서 EJS로 로그인 정보를 보냅니다.
+
+        // [수정됨] user: req.user 를 추가해서 EJS로 로그인 정보를 보냅니다.
       res.render('detail.ejs', { post : post, comments : comments, user : req.user });
       
     } catch (error) {
