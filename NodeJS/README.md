@@ -1,24 +1,31 @@
-# Node.js로 만든 CRUD 게시판 (my-first-nodejs-server)
+Node.js 풀스택 게시판 (이미지 업로드 & 실시간 채팅 포함)
 
-Node.js, Express, MongoDB를 사용해 만든 **로그인 및 CRUD(생성, 읽기, 수정, 삭제) 기능**이 포함된 게시판 서버입니다.
+Node.js, Express, MongoDB를 기반으로 **CRUD, 인증, 이미지 업로드(AWS S3), 실시간 채팅(Socket.io)** 기능을 모두 구현한 풀스택 웹 애플리케이션입니다.
 
 ---
 
 ## 사용된 기술 스택
 
-- Node.js
-- Express
-- MongoDB
-- EJS (Embedded JavaScript templates)
-- dotenv (환경 변수 관리)
-- express-session (세션 관리)
-- passport (로그인 인증)
-- passport-local (로컬 로그인 전략)
-- method-override (HTML Form에서 PUT, DELETE 요청)
+### Backend
+
+- **Node.js** & **Express**: 웹 서버 프레임워크
+- **MongoDB** & **Mongoose**: NoSQL 데이터베이스 및 ODM
+- **Passport.js**: 회원가입 및 로그인 인증 (Local Strategy)
+- **Socket.io**: 실시간 양방향 통신 (채팅)
+
+### Infrastructure & Storage
+
+- **AWS S3**: 이미지 파일 클라우드 저장소
+- **Multer** & **Multer-S3**: 파일 업로드 미들웨어
+
+### Frontend
+
+- **EJS**: 템플릿 엔진 (Server-Side Rendering)
+- **jQuery**: AJAX 요청 및 DOM 조작
 
 ---
 
-## 설치 방법
+## 설치 및 실행 방법
 
 1. 레포지토리를 클론합니다.
 
@@ -40,13 +47,17 @@ Node.js, Express, MongoDB를 사용해 만든 **로그인 및 CRUD(생성, 읽�
 
 4. `.env` 파일을 루트 디렉토리에 생성하고 필요한 환경 변수를 설정합니다.
 
-   ```text
-   # MongoDB 접속 문자열
-   DB_URL=mongodb+srv://...
+````text
+    PORT=8080
+    DB_URL=mongodb+srv://<아이디>:<비번>@... (MongoDB 접속 주소)
+    SESSION_SECRET=your_secret_key
 
-   # Express-Session 암호화 키
-   SESSION_SECRET=abc1234
-   ```
+    # AWS S3 설정 (이미지 업로드용)
+    AWS_ACCESS_KEY_ID=your_aws_access_key
+    AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+    AWS_REGION=ap-northeast-2
+    BUCKET_NAME=your_bucket_name
+    ```
 
 ---
 
@@ -55,50 +66,37 @@ Node.js, Express, MongoDB를 사용해 만든 **로그인 및 CRUD(생성, 읽�
 ```bash
 npm start
 
-```
+````
 
 # API 명세서
 
-## 1. PART.1: 기본 페이지 및 데이터 조회
+### 1. 회원 인증 (Auth)
 
-서버에서 EJS 템플릿을 렌더링하여 완전한 HTML 페이지로 반환합니다.
+| Method | Endpoint    | 설명                          |
+| :----- | :---------- | :---------------------------- |
+| POST   | `/login`    | Passport를 이용한 로그인 처리 |
+| POST   | `/register` | 회원가입 처리                 |
+| GET    | `/logout`   | 세션 종료 및 로그아웃         |
 
-| Method | Endpoint  | 주요 기능                                                                      | 응답 형식   |
-| :----- | :-------- | :----------------------------------------------------------------------------- | :---------- |
-| `GET`  | `/`       | 메인 페이지(`index.ejs`)를 렌더링합니다.                                       | `text/html` |
-| `GET`  | `/list`   | **`post`** 컬렉션의 모든 문서를 조회하여 `list.ejs` 템플릿에 렌더링합니다.     | `text/html` |
-| `GET`  | `/notice` | **`notice`** 컬렉션의 모든 문서를 조회하여 `notice.ejs` 템플릿에 렌더링합니다. | `text/html` |
+### 2. 게시판 (Board) & 이미지 (Image)
 
-## 2. PART.2: 게시판 CRUD (Create, Read, Update, Delete)
+| Method | Endpoint      | 설명                                                    |
+| :----- | :------------ | :------------------------------------------------------ |
+| GET    | `/list`       | 전체 게시물 목록 조회                                   |
+| GET    | `/detail/:id` | 게시물 상세 조회 (이미지 포함)                          |
+| POST   | `/add`        | **(Multipart)** 게시물 작성 및 **AWS S3 이미지 업로드** |
+| DELETE | `/delete`     | 게시물 삭제 (작성자 본인만 가능)                        |
+| PUT    | `/edit`       | 게시물 수정                                             |
 
-RESTful API 원칙에 따른 게시물 생성, 조회, 수정, 삭제 기능입니다.
+### 3. 실시간 채팅 (Chat)
 
-| Method   | Endpoint      | 주요 기능                                                                                                            | 응답 형식    |
-| :------- | :------------ | :------------------------------------------------------------------------------------------------------------------- | :----------- |
-| `GET`    | `/detail/:id` | `_id`가 `:id`와 일치하는 게시물을 `post` 컬렉션에서 조회하여 `detail.ejs`에 렌더링합니다.                            | `text/html`  |
-| `GET`    | `/write`      | 글 작성 페이지(`write.ejs`)를 렌더링합니다. **(로그인 필요)**                                                        | `text/html`  |
-| `POST`   | `/add`        | 글 작성 폼에서 전송된 `{title, content}` 데이터를 `post` 컬렉션에 `insertOne` 합니다. **(로그인 필요)**              | `Redirect`   |
-| `GET`    | `/edit/:id`   | `_id`가 `:id`와 일치하는 게시물 정보를 `edit.ejs` 템플릿에 렌더링합니다. **(본인 확인 필요)**                        | `text/html`  |
-| `PUT`    | `/edit`       | (Form + `method-override`) 수정 폼에서 전송된 정보로 `post` 컬렉션의 문서를 `updateOne` 합니다. **(본인 확인 필요)** | `Redirect`   |
-| `DELETE` | `/delete`     | (AJAX) 쿼리 스트링으로 전송된 `_id`를 기준으로 `post` 컬렉션의 문서를 `deleteOne` 합니다. **(본인 확인 필요)**       | `text/plain` |
+- **기술:** WebSocket (Socket.io)
+- **기능:**
+  - 유저 간 실시간 메시지 전송 (Broadcasting)
+  - 채팅방 입장/퇴장 시스템 알림
+  - 보낸 사람 닉네임 표시
 
-## 3. PART.2: 회원 기능 (Auth)
+### 4. 기타 기능
 
-`passport`와 `express-session`을 이용한 회원가입 및 로그인/로그아웃 기능입니다.
-
-| Method | Endpoint    | 주요 기능                                                                             | 응답 형식   |
-| :----- | :---------- | :------------------------------------------------------------------------------------ | :---------- |
-| `GET`  | `/login`    | 로그인 페이지(`login.ejs`)를 렌더링합니다.                                            | `text/html` |
-| `GET`  | `/register` | 회원가입 페이지(`register.ejs`)를 렌더링합니다.                                       | `text/html` |
-| `POST` | `/login`    | `passport.authenticate('local')` 미들웨어를 통해 로그인을 시도하고 세션을 생성합니다. | `Redirect`  |
-| `POST` | `/register` | 폼에서 전송된 `{username, password}` 데이터로 `user` 컬렉션에 새 사용자를 생성합니다. | `Redirect`  |
-| `GET`  | `/logout`   | `req.logout()`을 호출하여 세션을 종료(로그아웃)합니다.                                | `Redirect`  |
-| `GET`  | `/mypage`   | `req.user` 객체의 정보를 `mypage.ejs`에 렌더링합니다. **(로그인 필요)**               | `text/html` |
-
-## 4. PART.2: 댓글 기능 (Comment)
-
-게시물 상세 페이지(`detail.ejs`)에서 동작하는 댓글 기능입니다.
-
-| Method | Endpoint   | 주요 기능                                                                                              | 응답 형식  |
-| :----- | :--------- | :----------------------------------------------------------------------------------------------------- | :--------- |
-| `POST` | `/comment` | 폼에서 전송된 `{content, parent_id}` 데이터를 `comment` 컬렉션에 `insertOne` 합니다. **(로그인 필요)** | `Redirect` |
+- **이미지 제한:** 5MB 이상의 파일 업로드 제한 (Multer 설정)
+- **보안:** 로그인한 유저만 글 작성/수정/삭제 가능 (Middleware 적용)
