@@ -3,6 +3,8 @@ const { ObjectId } = require('mongodb');
 
 const router = Router();
 
+const upload = require('../middlewares/imageUpload.js');
+
 module.exports = function(db){
   // router.get('/list', async (req, res)=>{
 //   // res.send('리스트페이지');
@@ -27,7 +29,7 @@ module.exports = function(db){
     }
   })
   
-  router.post('/add', async (req, res)=>{
+  router.post('/add', upload.single('image'), async (req, res)=>{
     try {
       if (req.body.title === '' || req.body.content === ''){
         res.status(400).send('제목과 내용을 입력해주세요')
@@ -35,12 +37,18 @@ module.exports = function(db){
         
       }
       // console.log(req.body);
-      await db.collection('post').insertOne({title: req.body.title, content: req.body.content});
+      console.log(req.file.location);
+
+      await db.collection('post').insertOne({
+        title: req.body.title,
+        content: req.body.content,
+        img: req.file ? req.file.location : null
+      });
       res.redirect('/list/1');
-      
+
     } catch (error) {
       console.error(error);
-      res.status(500).send('데이터 저장 중 서버 오류 발생');
+      res.status(500).send(`<script>alert('서버 오류가 발생했습니다.'); location.href='/';</script>`);
     }
   })
   
@@ -57,8 +65,7 @@ module.exports = function(db){
         .find({ parent_id : new ObjectId(req.params.id) })
         .toArray();
 
-        // [수정됨] user: req.user 를 추가해서 EJS로 로그인 정보를 보냅니다.
-      res.render('detail.ejs', { post : post, comments : comments, user : req.user });
+      res.render('detail.ejs', { post : post, comments : comments, user : req.user});
       
     } catch (error) {
       console.error(error);

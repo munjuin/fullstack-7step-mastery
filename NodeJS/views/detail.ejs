@@ -14,6 +14,17 @@
     <h4><%= post.title %></h4>
     <p><%= post.content %></p>
     <p>작성자: <%= post.username %></p> 
+
+    <% if (post.img != null && post.img != "") { %>
+    <div class="img-box">
+      <img src="<%= post.img %>" alt="업로드된 이미지" style="max-width: 100%; margin-bottom: 20px;">
+    </div>
+    <% } %>
+
+    <div class="content-box">
+      <p><%= post.content %></p>
+    </div>
+
     <% if (user && String(user._id) !== String(post.user)) { %> 
     <button onclick="requestChat('<%= post.user %>', '<%= post._id %>')">
       채팅하기
