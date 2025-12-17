@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
-    "target": "es5", // 화살표 함수 등을 ES5 문법으로 변환
-    "module": "commonjs", // import/export 문법 설정
+    "target": "es6", // 화살표 함수 등을 ES5 문법으로 변환
+    "module": "ESNext", // import/export 문법 설정
     "strict": true, // [중요] 엄격한 타입 검사 켜기 (null 체크 등 포함)
     "noImplicitAny": true, // any 타입을 명시하지 않으면 에러 발생
-    "strictNullChecks": true // null, undefined 값이 들어가는 것 엄격히 체크
+    "strictNullChecks": true, // null, undefined 값이 들어가는 것 엄격히 체크
+    "lib": ["ES6", "DOM"],    // ES6 문법과 브라우저(DOM) 환경 라이브러리 추가
   }
 }
