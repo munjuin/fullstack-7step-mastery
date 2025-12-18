@@ -6,5 +6,6 @@
     "noImplicitAny": true, // any 타입을 명시하지 않으면 에러 발생
     "strictNullChecks": true, // null, undefined 값이 들어가는 것 엄격히 체크
     "lib": ["ES6", "DOM"],    // ES6 문법과 브라우저(DOM) 환경 라이브러리 추가
+    "jsx": "react-jsx", // 리액트 17 이상 버전 기준 (자동으로 리액트 임포트 처리)
   }
 }
